@@ -513,7 +513,7 @@ with tabs[0]:
                 if v == "✓":
                     return "background-color: #d4edda; color: #155724"
                 return ""
-            st.dataframe(pivot.style.applymap(_style_val), use_container_width=True)
+            st.dataframe(pivot.style.map(_style_val), use_container_width=True)
 
     # --- 7. Network & Relationships ---
     with st.expander("🔗 Network & Relationships", expanded=False):
