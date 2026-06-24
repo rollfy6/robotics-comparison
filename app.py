@@ -220,6 +220,18 @@ with tabs[0]:
                 fig = px.pie(df_s, names="status", values="count", title="Company Status")
                 st.plotly_chart(fig, use_container_width=True)
 
+        all_cos = get_all_companies(conn)
+        if all_cos:
+            with st.expander("📄 Show source data", expanded=False):
+                for c in all_cos:
+                    url = c.get("website", "")
+                    link = f"[{url}]({url})" if url else ""
+                    hq = c.get("headquarters", "") or c.get("country", "") or ""
+                    model = c.get("business_model", "") or ""
+                    year = c.get("founded_year", "") or ""
+                    status = c.get("status", "") or ""
+                    st.markdown(f"**{c['name']}** — {link} — {hq} — {model} — Founded {year} — {status}")
+
     # --- 3. Products & Capabilities ---
     with st.expander("📦 Products & Capabilities", expanded=False):
         col1, col2 = st.columns(2)
@@ -251,6 +263,17 @@ with tabs[0]:
                          barmode="group", title="Avg Spec Values by Category")
             st.plotly_chart(fig, use_container_width=True)
 
+        all_ps = get_all_products(conn)
+        if all_ps:
+            with st.expander("📄 Show source data", expanded=False):
+                for p in all_ps:
+                    url = p.get("product_url", "")
+                    link = f"[{url}]({url})" if url else ""
+                    cat = p.get("category", "") or ""
+                    year = p.get("release_year", "") or ""
+                    company = p.get("company_name", "") or ""
+                    st.markdown(f"**{p['name']}** — {link} — *{company}* — {cat} — Released {year}")
+
     # --- 4. Engineering & Talent ---
     with st.expander("👥 Engineering & Talent", expanded=False):
         eng = get_insight_engineering_percent(conn)
@@ -272,6 +295,18 @@ with tabs[0]:
                     fig = px.bar(df_ec, x="category", y="avg_eng_pct",
                                  title="Avg Engineering % by Product Category")
                     st.plotly_chart(fig, use_container_width=True)
+
+        eng_cos = get_all_companies(conn)
+        eng_cos = [c for c in eng_cos if c.get("engineering_pct") or c.get("engineering_employees")]
+        if eng_cos:
+            with st.expander("📄 Show source data", expanded=False):
+                for c in eng_cos:
+                    url = c.get("website", "")
+                    link = f"[{url}]({url})" if url else ""
+                    emp = c.get("employees", "") or ""
+                    eng_emp = c.get("engineering_employees", "") or ""
+                    eng_pct = c.get("engineering_pct", "") or ""
+                    st.markdown(f"**{c['name']}** — {link} — {emp} total — {eng_emp} eng — {eng_pct}% eng")
 
     # --- 5. Storage & Bin Types ---
     with st.expander("🗄️ Storage & Bin Types", expanded=False):
@@ -306,6 +341,17 @@ with tabs[0]:
                     "max_payload_kg", "grid_height_m"]
             df_bd = df_bd[[c for c in cols if c in df_bd.columns]]
             st.dataframe(df_bd, use_container_width=True)
+            if bins_detail:
+                prod_urls = {p["slug"]: p.get("product_url", "") for p in get_all_products(conn)}
+                with st.expander("📄 Show source data", expanded=False):
+                    for r in bins_detail:
+                        url = prod_urls.get(r.get("product_slug", ""), "")
+                        link = f"[{url}]({url})" if url else ""
+                        st.markdown(
+                            f"**{r['product_name']}** — {link} — "
+                            f"{r.get('bin_type', '')} {r.get('label', '')} — "
+                            f"{r.get('max_payload_kg', '')}kg — {r.get('grid_height_m', '')}m grid"
+                        )
 
     # --- 6. Case Study Insights ---
     with st.expander("📋 Case Study Insights", expanded=False):
@@ -595,6 +641,16 @@ with tabs[0]:
                          orientation="h", title="Academic Origins")
             st.plotly_chart(fig, use_container_width=True)
 
+        all_assocs = get_all_associations(conn)
+        if all_assocs:
+            with st.expander("📄 Show source data", expanded=False):
+                for a in all_assocs:
+                    comp = a.get("company_name", "")
+                    assoc_comp = a.get("associated_company_name", "") or a.get("association_name", "") or ""
+                    atype = a.get("association_type", "")
+                    notes = a.get("notes", "") or ""
+                    st.markdown(f"**{comp}** → {assoc_comp} — *{atype}* — {notes}")
+
     # --- 8. People & Leadership ---
     with st.expander("👤 People & Leadership", expanded=False):
         col1, col2 = st.columns(2)
@@ -611,6 +667,19 @@ with tabs[0]:
                 df_rd = pd.DataFrame(roles, columns=["role", "count"])
                 fig = px.pie(df_rd, names="role", values="count", title="Role Distribution")
                 st.plotly_chart(fig, use_container_width=True)
+
+        people_rows = conn.execute("""
+            SELECT p.name AS person, pr.role, c.name AS company
+            FROM person_roles pr
+            JOIN people p ON pr.person_id = p.id
+            JOIN companies c ON pr.entity_id = c.id
+            WHERE pr.entity_type = 'company'
+            ORDER BY c.name, p.name
+        """).fetchall()
+        if people_rows:
+            with st.expander("📄 Show source data", expanded=False):
+                for r in people_rows:
+                    st.markdown(f"**{r['person']}** — *{r['role']}* — {r['company']}")
 
 with tabs[1]:
     st.subheader("Product Comparison")
