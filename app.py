@@ -176,6 +176,16 @@ with tabs[0]:
                 df_bm = pd.DataFrame(by_bmodel, columns=["model", "count"])
                 fig = px.bar(df_bm, x="count", y="model", orientation="h", title="Business Model")
                 st.plotly_chart(fig, use_container_width=True)
+            with st.expander("What do these labels mean?", expanded=False):
+                st.markdown("""
+| Label | Meaning | Example Companies |
+|-------|---------|-----------------|
+| **Purchase** | Traditional upfront purchase / CapEx | Boston Dynamics, KUKA, FANUC |
+| **Purchase / RaaS** | Both purchase and RaaS equally available | Zebra/Fetch, MiR, 6 River Systems |
+| **RaaS** | Subscription / outcome-based pricing | Locus Robotics |
+| **Hybrid** | Mixed purchase + RaaS / subscription model | AutoStore, Geek+, Exotec, GreyOrange, Pudu, Symbotic |
+| **Internal Use Only** | Built for own operations, not for sale | Amazon Robotics |
+                """)
 
         col1, col2 = st.columns(2)
         with col1:
@@ -335,6 +345,7 @@ with tabs[0]:
         # --- Throughput chart ---
         throughput_metrics = ["picks_per_hour", "cases_per_hour", "bins_per_hour", "items_per_hour"]
         tp_data = []
+        tp_src = []
         for m in throughput_metrics:
             rows = get_case_study_metrics(conn, metric_name=m)
             for r in rows:
@@ -345,17 +356,24 @@ with tabs[0]:
                         "value": r["metric_value_num"],
                         "unit": r["unit"],
                     })
+                    tp_src.append(r)
         if tp_data:
             df_tp = pd.DataFrame(tp_data)
             fig = px.bar(df_tp, x="value", y="company", color="metric",
                          barmode="group", orientation="h",
                          title="Throughput Metrics (picks/cases/bins per hour)")
             st.plotly_chart(fig, use_container_width=True)
+            if tp_src:
+                with st.expander("📄 Show source data", expanded=False):
+                    df_src = pd.DataFrame(tp_src)
+                    st.dataframe(df_src[["case_title", "company_name", "metric_name", "metric_value_text", "metric_value_num", "source"]],
+                                 use_container_width=True, hide_index=True)
 
         # --- Multipliers chart ---
         mult_metrics = ["picking_efficiency_multiplier", "throughput_multiplier",
                         "storage_density_multiplier", "productivity_multiplier"]
         mult_data = []
+        mult_src = []
         for m in mult_metrics:
             rows = get_case_study_metrics(conn, metric_name=m)
             for r in rows:
@@ -366,6 +384,7 @@ with tabs[0]:
                         "value": r["metric_value_num"],
                         "unit": "x",
                     })
+                    mult_src.append(r)
         if mult_data:
             df_md = pd.DataFrame(mult_data)
             fig = px.bar(df_md, x="value", y="company", color="metric",
@@ -373,12 +392,19 @@ with tabs[0]:
                          title="Productivity & Density Multipliers (x improvement)")
             fig.update_layout(xaxis_title="Multiplier (x)")
             st.plotly_chart(fig, use_container_width=True)
+            if mult_src:
+                with st.expander("📄 Show source data", expanded=False):
+                    df_src = pd.DataFrame(mult_src)
+                    st.dataframe(df_src[["case_title", "company_name", "metric_name", "metric_value_text", "metric_value_num", "source"]],
+                                 use_container_width=True, hide_index=True)
 
         col1, col2 = st.columns(2)
         with col1:
             # --- Accuracy / Uptime ---
+            acc_metrics = ["uptime_pct", "inventory_accuracy_pct", "delivery_reliability_pct", "pick_rate_pct"]
             acc_data = []
-            for m in ["uptime_pct", "inventory_accuracy_pct", "delivery_reliability_pct", "pick_rate_pct"]:
+            acc_src = []
+            for m in acc_metrics:
                 rows = get_case_study_metrics(conn, metric_name=m)
                 for r in rows:
                     if r.get("metric_value_num"):
@@ -387,6 +413,7 @@ with tabs[0]:
                             "metric": m.replace("_pct", "").replace("_", " ").title(),
                             "value": r["metric_value_num"],
                         })
+                        acc_src.append(r)
             if acc_data:
                 df_acc = pd.DataFrame(acc_data)
                 fig = px.bar(df_acc, x="value", y="company", color="metric",
@@ -394,6 +421,11 @@ with tabs[0]:
                              title="Accuracy, Uptime & Reliability (%)")
                 fig.update_layout(xaxis_title="%", xaxis_range=[90, 100])
                 st.plotly_chart(fig, use_container_width=True)
+                if acc_src:
+                    with st.expander("📄 Show source data", expanded=False):
+                        df_src = pd.DataFrame(acc_src)
+                        st.dataframe(df_src[["case_title", "company_name", "metric_name", "metric_value_text", "metric_value_num", "source"]],
+                                     use_container_width=True, hide_index=True)
 
         with col2:
             # --- ROI / Payback ---
@@ -405,6 +437,11 @@ with tabs[0]:
                              hover_data=["metric_value_text"])
                 fig.update_layout(xaxis_title="Months")
                 st.plotly_chart(fig, use_container_width=True)
+            if roi_data:
+                with st.expander("📄 Show source data", expanded=False):
+                    df_src = pd.DataFrame(roi_data)
+                    st.dataframe(df_src[["case_title", "company_name", "metric_name", "metric_value_text", "metric_value_num", "source"]],
+                                 use_container_width=True, hide_index=True)
 
         col1, col2 = st.columns(2)
         with col1:
@@ -412,6 +449,7 @@ with tabs[0]:
             robots_data = get_case_study_metrics(conn, metric_name="robots_deployed")
             skus_data = get_case_study_metrics(conn, metric_name="sku_count")
             scale_data = []
+            scale_src = []
             for r in robots_data:
                 if r.get("metric_value_num"):
                     scale_data.append({
@@ -419,6 +457,7 @@ with tabs[0]:
                         "metric": "Robots Deployed",
                         "value": r["metric_value_num"],
                     })
+                    scale_src.append(r)
             for r in skus_data:
                 if r.get("metric_value_num"):
                     scale_data.append({
@@ -426,12 +465,18 @@ with tabs[0]:
                         "metric": "SKU Count",
                         "value": r["metric_value_num"],
                     })
+                    scale_src.append(r)
             if scale_data:
                 df_scale = pd.DataFrame(scale_data)
                 fig = px.bar(df_scale, x="value", y="company", color="metric",
                              barmode="group", orientation="h",
                              title="Operational Scale (Robots & SKUs)")
                 st.plotly_chart(fig, use_container_width=True)
+                if scale_src:
+                    with st.expander("📄 Show source data", expanded=False):
+                        df_src = pd.DataFrame(scale_src)
+                        st.dataframe(df_src[["case_title", "company_name", "metric_name", "metric_value_text", "metric_value_num", "source"]],
+                                     use_container_width=True, hide_index=True)
 
         with col2:
             # --- Floor Space Savings ---
@@ -443,9 +488,14 @@ with tabs[0]:
                              hover_data=["metric_value_text"])
                 fig.update_layout(xaxis_title="% Reduction")
                 st.plotly_chart(fig, use_container_width=True)
+                with st.expander("📄 Show source data", expanded=False):
+                    df_src = pd.DataFrame(floor_data)
+                    st.dataframe(df_src[["case_title", "company_name", "metric_name", "metric_value_text", "metric_value_num", "source"]],
+                                 use_container_width=True, hide_index=True)
 
         # --- Retrieval / Process Time ---
         time_data = []
+        time_src = []
         for m in ["retrieval_time_seconds", "process_time_minutes"]:
             rows = get_case_study_metrics(conn, metric_name=m)
             for r in rows:
@@ -455,12 +505,18 @@ with tabs[0]:
                         "metric": "Retrieval (s)" if "second" in str(r.get("unit", "")) else "Process (min)",
                         "value": r["metric_value_num"],
                     })
+                    time_src.append(r)
         if time_data:
             df_time = pd.DataFrame(time_data)
             fig = px.bar(df_time, x="value", y="company", color="metric",
                          barmode="group", orientation="h",
                          title="Retrieval & Process Times")
             st.plotly_chart(fig, use_container_width=True)
+            if time_src:
+                with st.expander("📄 Show source data", expanded=False):
+                    df_src = pd.DataFrame(time_src)
+                    st.dataframe(df_src[["case_title", "company_name", "metric_name", "metric_value_text", "metric_value_num", "source"]],
+                                 use_container_width=True, hide_index=True)
 
         # --- Inferred metrics ---
         inferred_metrics = ["items_per_case", "units_per_sqft", "bins_per_hour_per_robot",

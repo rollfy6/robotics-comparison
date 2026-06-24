@@ -40,6 +40,15 @@ def init_db(conn):
         conn.execute("ALTER TABLE products ADD COLUMN image_source TEXT DEFAULT 'auto'")
     except Exception:
         pass
+    # Migration: consolidate business_model labels
+    try:
+        conn.execute("UPDATE companies SET business_model = 'Hybrid' WHERE business_model IN ('Purchase / Hybrid', 'RaaS / Hybrid')")
+    except Exception:
+        pass
+    try:
+        conn.execute("UPDATE companies SET business_model = 'RaaS' WHERE business_model = 'RaaS (Robot-as-a-Service)'")
+    except Exception:
+        pass
 
     conn.executescript("""
         CREATE TABLE IF NOT EXISTS companies (
@@ -366,7 +375,7 @@ def seed_database(conn):
             "headquarters": "Charlestown, MA",
             "founded_year": 2018,
             "funding_total_usd": "$50M+",
-            "business_model": "Purchase / Hybrid",
+            "business_model": "Hybrid",
             "revenue_est": "Undisclosed (private)",
             "employees": "100-200",
             "notes": "Named to Fast Company's 2026 Most Innovative Companies list. Uses KUKA robot arms. UPS is a customer.",
@@ -381,7 +390,7 @@ def seed_database(conn):
             "headquarters": "Wilmington, MA",
             "founded_year": 2014,
             "funding_total_usd": "$500M+",
-            "business_model": "RaaS (Robot-as-a-Service)",
+            "business_model": "RaaS",
             "revenue_est": "~$300M (2025 est.)",
             "employees": "500-1000",
             "notes": "RaaS model ~$1,500/robot/month. 48-hour pilot deployment capability. Broad pre-built WMS integrations.",
@@ -396,7 +405,7 @@ def seed_database(conn):
             "headquarters": "Beijing, China",
             "founded_year": 2015,
             "funding_total_usd": "$500M+",
-            "business_model": "Purchase / Hybrid",
+            "business_model": "Hybrid",
             "revenue_est": "~$400M (2025 est.)",
             "employees": "2000+",
             "notes": "Nearly 50% global market share in goods-to-person AMR solutions. Product lines: P, M, S, RS series.",
@@ -411,7 +420,7 @@ def seed_database(conn):
             "headquarters": "Shenzhen, China",
             "founded_year": 2016,
             "funding_total_usd": "$200M+",
-            "business_model": "Purchase / Hybrid",
+            "business_model": "Hybrid",
             "revenue_est": "~$150M (2025 est.)",
             "employees": "1000+",
             "notes": "1,000+ systems deployed globally. ACR technology bridges gap between AMRs and traditional ASRS.",
@@ -426,7 +435,7 @@ def seed_database(conn):
             "headquarters": "Nedre Vats, Norway",
             "founded_year": 1996,
             "funding_total_usd": "Public (AUTO.OL)",
-            "business_model": "Purchase / Hybrid",
+            "business_model": "Hybrid",
             "revenue_est": "~$550M (2024)",
             "employees": "1000+",
             "notes": "99.7% uptime across all installations. 10 robots use energy of 1 vacuum cleaner. Public company.",
@@ -457,7 +466,7 @@ def seed_database(conn):
             "headquarters": "Wilmington, MA",
             "founded_year": 2007,
             "funding_total_usd": "Public (SYM)",
-            "business_model": "Purchase / Hybrid",
+            "business_model": "Hybrid",
             "revenue_est": "~$1.8B (FY2025)",
             "employees": "2000+",
             "notes": "Acquired Walmart's internal robotics arm in 2025. Public company on NASDAQ.",
@@ -487,7 +496,7 @@ def seed_database(conn):
             "headquarters": "Atlanta, GA / Singapore",
             "founded_year": 2012,
             "funding_total_usd": "$300M+",
-            "business_model": "RaaS / Hybrid",
+            "business_model": "Hybrid",
             "revenue_est": "~$100M (2025 est.)",
             "employees": "500-1000",
             "notes": "GreyMatter orchestration platform supports multi-vendor fleets.",
@@ -502,7 +511,7 @@ def seed_database(conn):
             "headquarters": "Croix, France",
             "founded_year": 2015,
             "funding_total_usd": "$400M+",
-            "business_model": "Purchase / Hybrid",
+            "business_model": "Hybrid",
             "revenue_est": "~$200M (2025 est.)",
             "employees": "500+",
             "notes": "Unicorn startup (2022). Skypod robot climbs racks at 4 m/s.",
