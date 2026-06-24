@@ -9,6 +9,33 @@ from scraper import case_studies as cs_scraper
 
 st.set_page_config(page_title="Robotics Industry Comparison", layout="wide", page_icon="🤖")
 
+# --- Simple password gate ---
+import os
+
+def _check_password():
+    if st.session_state.get("authenticated", False):
+        return True
+    password = st.secrets.get("APP_PASSWORD") or os.environ.get("APP_PASSWORD", "robotics2026")
+    with st.container():
+        st.markdown("## 🔒 Access Restricted")
+        st.markdown("Enter the password to view this dashboard.")
+        col1, col2 = st.columns([1, 2])
+        with col1:
+            user_input = st.text_input("Password", type="password", label_visibility="collapsed",
+                                       placeholder="Enter password")
+            if st.button("Unlock"):
+                if user_input == password:
+                    st.session_state["authenticated"] = True
+                    st.rerun()
+                else:
+                    st.error("Incorrect password")
+    return False
+
+if not _check_password():
+    st.stop()
+
+# --- End password gate ---
+
 def _is_valid_image_url(url):
     return bool(url) and url not in (None, "None", "") and (url.startswith("http://") or url.startswith("https://"))
 
