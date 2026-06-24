@@ -4583,7 +4583,7 @@ def get_case_study_metrics(conn, metric_name=None, min_value=None):
     """Fetch structured case study metrics, optionally filtered by name and min numeric value."""
     query = """
         SELECT csm.*, cs.title AS case_title, cs.customer, cs.industry,
-               co.name AS company_name, co.slug AS company_slug
+               cs.url AS case_url, co.name AS company_name, co.slug AS company_slug
         FROM case_study_metrics csm
         JOIN case_studies cs ON csm.case_study_id = cs.id
         JOIN companies co ON cs.company_id = co.id

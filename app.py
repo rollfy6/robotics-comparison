@@ -39,6 +39,25 @@ if not _check_password():
 def _is_valid_image_url(url):
     return bool(url) and url not in (None, "None", "") and (url.startswith("http://") or url.startswith("https://"))
 
+def _render_metric_provenance(rows, title="Source Data"):
+    if not rows:
+        return
+    with st.expander(f"📄 {title}", expanded=False):
+        for r in rows:
+            snippet = (r.get("metric_value_text") or "")[:160]
+            if not snippet:
+                continue
+            url = r.get("case_url") or r.get("url", "")
+            val = r.get("metric_value_num", "")
+            unit = r.get("unit", "") or ""
+            company = r.get("company_name", "")
+            src = r.get("source", "")
+            tag = f" *(inferred)*" if src == "inferred" else ""
+            label = f"**{val}** {unit}" if val else ""
+            link = f"[{snippet}]({url})" if url else snippet
+            st.markdown(f"**{company}** — {link} → {label}{tag}")
+
+
 conn = get_db()
 init_db(conn)
 seed_database(conn)
@@ -364,10 +383,7 @@ with tabs[0]:
                          title="Throughput Metrics (picks/cases/bins per hour)")
             st.plotly_chart(fig, use_container_width=True)
             if tp_src:
-                with st.expander("📄 Show source data", expanded=False):
-                    df_src = pd.DataFrame(tp_src)
-                    st.dataframe(df_src[["case_title", "company_name", "metric_name", "metric_value_text", "metric_value_num", "source"]],
-                                 use_container_width=True, hide_index=True)
+                _render_metric_provenance(tp_src, "Throughput source data")
 
         # --- Multipliers chart ---
         mult_metrics = ["picking_efficiency_multiplier", "throughput_multiplier",
@@ -393,10 +409,7 @@ with tabs[0]:
             fig.update_layout(xaxis_title="Multiplier (x)")
             st.plotly_chart(fig, use_container_width=True)
             if mult_src:
-                with st.expander("📄 Show source data", expanded=False):
-                    df_src = pd.DataFrame(mult_src)
-                    st.dataframe(df_src[["case_title", "company_name", "metric_name", "metric_value_text", "metric_value_num", "source"]],
-                                 use_container_width=True, hide_index=True)
+                _render_metric_provenance(mult_src, "Multiplier source data")
 
         col1, col2 = st.columns(2)
         with col1:
@@ -422,10 +435,7 @@ with tabs[0]:
                 fig.update_layout(xaxis_title="%", xaxis_range=[90, 100])
                 st.plotly_chart(fig, use_container_width=True)
                 if acc_src:
-                    with st.expander("📄 Show source data", expanded=False):
-                        df_src = pd.DataFrame(acc_src)
-                        st.dataframe(df_src[["case_title", "company_name", "metric_name", "metric_value_text", "metric_value_num", "source"]],
-                                     use_container_width=True, hide_index=True)
+                    _render_metric_provenance(acc_src, "Accuracy source data")
 
         with col2:
             # --- ROI / Payback ---
@@ -438,10 +448,7 @@ with tabs[0]:
                 fig.update_layout(xaxis_title="Months")
                 st.plotly_chart(fig, use_container_width=True)
             if roi_data:
-                with st.expander("📄 Show source data", expanded=False):
-                    df_src = pd.DataFrame(roi_data)
-                    st.dataframe(df_src[["case_title", "company_name", "metric_name", "metric_value_text", "metric_value_num", "source"]],
-                                 use_container_width=True, hide_index=True)
+                _render_metric_provenance(roi_data, "ROI source data")
 
         col1, col2 = st.columns(2)
         with col1:
@@ -473,10 +480,7 @@ with tabs[0]:
                              title="Operational Scale (Robots & SKUs)")
                 st.plotly_chart(fig, use_container_width=True)
                 if scale_src:
-                    with st.expander("📄 Show source data", expanded=False):
-                        df_src = pd.DataFrame(scale_src)
-                        st.dataframe(df_src[["case_title", "company_name", "metric_name", "metric_value_text", "metric_value_num", "source"]],
-                                     use_container_width=True, hide_index=True)
+                    _render_metric_provenance(scale_src, "Scale source data")
 
         with col2:
             # --- Floor Space Savings ---
@@ -488,10 +492,7 @@ with tabs[0]:
                              hover_data=["metric_value_text"])
                 fig.update_layout(xaxis_title="% Reduction")
                 st.plotly_chart(fig, use_container_width=True)
-                with st.expander("📄 Show source data", expanded=False):
-                    df_src = pd.DataFrame(floor_data)
-                    st.dataframe(df_src[["case_title", "company_name", "metric_name", "metric_value_text", "metric_value_num", "source"]],
-                                 use_container_width=True, hide_index=True)
+                _render_metric_provenance(floor_data, "Floor space source data")
 
         # --- Retrieval / Process Time ---
         time_data = []
@@ -513,10 +514,7 @@ with tabs[0]:
                          title="Retrieval & Process Times")
             st.plotly_chart(fig, use_container_width=True)
             if time_src:
-                with st.expander("📄 Show source data", expanded=False):
-                    df_src = pd.DataFrame(time_src)
-                    st.dataframe(df_src[["case_title", "company_name", "metric_name", "metric_value_text", "metric_value_num", "source"]],
-                                 use_container_width=True, hide_index=True)
+                _render_metric_provenance(time_src, "Time source data")
 
         # --- Inferred metrics ---
         inferred_metrics = ["items_per_case", "units_per_sqft", "bins_per_hour_per_robot",
